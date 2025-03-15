@@ -68,6 +68,7 @@ namespace restapitodo.Controllers
 
             _context.ToDoItems.Remove(toDoItem);
             await _context.SaveChangesAsync();
+
             return Ok(toDoItem);
         }
     }
