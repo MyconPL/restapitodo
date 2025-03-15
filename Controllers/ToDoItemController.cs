@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using restapitodo.Data;
 using restapitodo.Models;
@@ -33,13 +34,41 @@ namespace restapitodo.Controllers
             return Ok(toDoItems);
         }
         [HttpPost]
-        [Route("{id}")]
-        public async Task<ActionResult<List<ToDoItem>>> GetToDo(int id)
+        public async Task<ActionResult<List<ToDoItem>>> AddToDo([FromBody] ToDoItem newTodo)
         {
-            var toDoItems = await _context.ToDoItems.FindAsync(id);
-            if (toDoItems is null)
+            if (newTodo == null || string.IsNullOrWhiteSpace(newTodo.Title))
+                return BadRequest("Nie podano zadania");
+
+            _context.ToDoItems.Add(newTodo);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetToDo), new { id = newTodo.Id }, newTodo);
+        }
+
+        [HttpPut]
+        [Route("{id}")]
+        public async Task<ActionResult<List<ToDoItem>>> ToggleCompletion(int id)
+        {
+            var toDoItem = await _context.ToDoItems.FindAsync(id);
+            if (toDoItem is null)
                 return NotFound("Nie znaleziono zadania");
-            return Ok(toDoItems);
+
+            toDoItem.IsComplete = !toDoItem.IsComplete;
+            await _context.SaveChangesAsync();
+            return Ok(toDoItem);
+        }
+
+        [HttpDelete]
+        [Route("{id}")]
+        public async Task<ActionResult<List<ToDoItem>>> DeleteToDo(int id)
+        {
+            var toDoItem = await _context.ToDoItems.FindAsync(id);
+            if (toDoItem is null)
+                return NotFound("Nie znaleziono zadania");
+
+            _context.ToDoItems.Remove(toDoItem);
+            await _context.SaveChangesAsync();
+            return Ok(toDoItem);
         }
     }
 }
